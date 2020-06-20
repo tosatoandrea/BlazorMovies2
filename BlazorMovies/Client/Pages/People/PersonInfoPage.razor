@@ -1,0 +1,49 @@
+﻿@page "/person/info/{id:int}/{name}"
+@attribute [Authorize]
+@inject IPersonRepository personRepo
+@inject IMoviesRepository movieRepo
+
+<h3>Actor Info</h3>
+
+@if (person != null)
+{
+    <div>
+        <h2>@person.Name</h2>
+    </div>
+
+    <div>
+        <label>Date Of Birth:  </label>
+        <label>@person.DateOfBirth.Value.ToShortDateString()</label>
+    </div>
+
+    <div>
+        <div style="margin: 10px">
+            <img src="@person.Picture" style="width: 400px;" />
+        </div>
+    </div>
+
+    <div class="form-markdown">
+        @person.Biography
+    </div>
+}
+@if (movies != null)
+{
+    @foreach (var m in movies.OrderByDescending(x => x.ReleaseDate))
+    {
+        <a href="movie/@m.Id/@m.Title.Replace(" ", "-")">@m.Title (@m.ReleaseDate.Value.ToShortDateString())</a>
+    }
+}
+
+@code {
+    Person person;
+    List<Movie> movies;
+    [Parameter] public int Id { get; set; }
+    [Parameter] public string Name { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        person = await personRepo.Get(Id);
+        movies = await movieRepo.GetMoviesByActor(Id);
+    }
+
+}

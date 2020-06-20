@@ -1,0 +1,27 @@
+﻿@page "/genre/edit/{GenreId:int}"
+@attribute [Authorize]
+@inject IGenreRepository genreRepository
+@inject NavigationManager nav
+
+<h3>Edit Genre</h3>
+
+@if (genre != null)
+{
+    <GenreForm Genre="genre" OnValidSubmit="Edit" />
+}
+
+@code {
+    [Parameter] public int GenreId { get; set; }
+    private Genre genre;
+
+    protected override async Task OnInitializedAsync()
+    {
+        genre = await genreRepository.GetGenre(GenreId);
+    }
+
+    private async Task Edit()
+    {
+        await genreRepository.UpdateGenre(genre);
+        nav.NavigateTo("genres");
+    }
+}

@@ -1,0 +1,44 @@
+﻿<div class="multiple-selector">
+    <ul class="selectable-ul">
+        @foreach (var item in NotSelected)
+        {
+            <li @onclick="@(() => Select(item))">@item.Value</li>
+        }
+    </ul>
+    <div class="multiple-selector-buttons">
+        <button class="btn btn-info" type="button" @onclick="SelectAll">&gt&gt</button>
+        <button class="btn btn-info" type="button" @onclick="DeselectAll">&lt;&lt;</button>
+    </div>
+    <ul class="selectable-ul">
+        @foreach (var item in Selected)
+        {
+            <li @onclick="@(() => Deselect(item))">@item.Value</li>
+        }
+    </ul>
+</div>
+
+@code {
+    [Parameter] public List<MultipleSelectorModel> NotSelected { get; set; } = new List<MultipleSelectorModel>();
+    [Parameter] public List<MultipleSelectorModel> Selected { get; set; } = new List<MultipleSelectorModel>();
+
+    private void Select(MultipleSelectorModel item)
+    {
+        NotSelected.Remove(item);
+        Selected.Add(item);
+    }
+    private void Deselect(MultipleSelectorModel item)
+    {
+        Selected.Remove(item);
+        NotSelected.Add(item);
+    }
+    private void SelectAll()
+    {
+        Selected.AddRange(NotSelected);
+        NotSelected.Clear();
+    }
+    private void DeselectAll()
+    {
+        NotSelected.AddRange(Selected);
+        Selected.Clear();
+    }
+}

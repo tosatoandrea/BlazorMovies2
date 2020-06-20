@@ -1,0 +1,51 @@
+﻿@typeparam T
+
+@if (List == null)
+{
+
+    @if (NullTemplate != null)
+    {
+        @NullTemplate
+        Console.WriteLine("child content != null");
+    }
+    else
+    {
+        <img src="https://i.gifer.com/origin/34/34338d26023e5515f6cc8969aa027bca_w200.gif" />
+        Console.WriteLine("child content == null");
+    }
+}
+else if (List.Count == 0)
+{
+    if (EmptyTemplate != null)
+    {
+        @EmptyTemplate
+    }
+    else
+    {
+        <text>There are no records to show</text>
+    }
+
+}
+else
+{
+    @if (ElementTemplate != null)
+    {
+        @foreach (var element in List)
+        {
+            @ElementTemplate(element)
+        }
+    }
+    else
+    {
+        @WholeListTemplate
+    }
+}
+
+@code {
+    [Parameter] public List<T> List { get; set; }
+    [Parameter] public RenderFragment NullTemplate { get; set; }
+    [Parameter] public RenderFragment EmptyTemplate { get; set; }
+    [Parameter] public RenderFragment WholeListTemplate { get; set; }
+    [Parameter] public RenderFragment<T> ElementTemplate { get; set; }
+
+}

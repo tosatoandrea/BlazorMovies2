@@ -1,0 +1,28 @@
+﻿@page "/person/edit/{PersonId:int}"
+@attribute [Authorize]
+@inject IPersonRepository personRepository
+@inject NavigationManager nav
+
+<h3>Edit Person</h3>
+
+@if (person != null)
+{
+    <PersonForm person="person" OnValidSubmit="Save" />
+}
+
+@code {
+    [Parameter] public int PersonId { get; set; }
+    Person person;
+
+    protected override async Task OnInitializedAsync()
+    {
+        person = await personRepository.Get(PersonId);
+    }
+
+    private async Task Save()
+    {
+        await personRepository.UpdatePerson(person);
+        nav.NavigateTo("people");
+    }
+
+}

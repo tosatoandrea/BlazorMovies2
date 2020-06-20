@@ -1,0 +1,76 @@
+﻿@page "/people"
+@attribute [Authorize]
+@inject IPersonRepository personRepository
+
+<h3>People</h3>
+
+<div class="form-group">
+    <a href="person/create" class="btn btn-info">Create Person</a>
+</div>
+
+<Pagination CurrentPage="@paginationDTO.Page" TotalAmountOfPages="totalAmountOfPages"
+            SelectedPage="SelectedPage"></Pagination>
+
+<GenericList List="people">
+    <WholeListTemplate>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th></th>
+                    <th>Name</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in people)
+                {
+                    <tr>
+                        <td>
+                            <a class="btn btn-success" href="/person/edit/@item.Id">Edit</a>
+                            <button class="btn btn-danger" @onclick="@(() => DeletePerson(item.Id))">Delete</button>
+                        </td>
+                        <td><a href="person/info/@item.Id/@item.Name.Replace(" ", "-")">@item.Name</a></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </WholeListTemplate>
+</GenericList>
+
+@code {
+    List<Person> people = new List<Person>();
+    PaginationDTO paginationDTO = new PaginationDTO() { RecordPerPage = 2 };
+    private int totalAmountOfPages;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        Console.WriteLine("OnInitializedAsync");
+        try
+        {
+            await LoadPeople();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("OnInitializedAsync " + ex.Message);
+        }
+    }
+
+    private async Task LoadPeople()
+    {
+        var paginatedResponse = await personRepository.GetPeople(paginationDTO);
+        people = paginatedResponse.Response;
+        totalAmountOfPages = paginatedResponse.TotalAmountOfPages;
+    }
+
+    private async Task SelectedPage(int page)
+    {
+        paginationDTO.Page = page;
+        await LoadPeople();
+    }
+
+    private async Task DeletePerson(int id)
+    {
+        await personRepository.DeletePerson(id);
+        await LoadPeople();
+    }
+}

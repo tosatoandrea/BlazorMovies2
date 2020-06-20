@@ -1,0 +1,43 @@
+﻿@page "/"
+@page "/index"
+@inject IMoviesRepository moviesRepository
+
+@*Attributo rules, indica i gruppi utente ai quali l'utente deve appartenere per essere considerato autorizzato*@
+@*<AuthorizeView Roles="Admin">*@
+<AuthorizeView>
+    <Authorized>
+        You are authorized, @context.User.Identity.Name [@context.User.Claims.Where(x => x.Type == System.Security.Claims.ClaimTypes.Role).FirstOrDefault()?.Value]
+    </Authorized>
+    <NotAuthorized>
+        Not authorized
+    </NotAuthorized>
+</AuthorizeView>
+
+<div>
+    <h3>In Theaters</h3>
+
+    <MoviesList Movies="InTheaters" />
+</div>
+
+<div>
+    <h3>Upcoming Releases</h3>
+
+    <MoviesList Movies="UpcomingReleases" />
+</div>
+
+
+
+@code{
+    List<Movie> InTheaters;
+    List<Movie> UpcomingReleases;
+
+    protected async override Task OnInitializedAsync()
+    {
+        var dto = await moviesRepository.GetIndexPageDTO();
+        if (dto != null)
+        {
+            InTheaters = dto.InTheaters;
+            UpcomingReleases = dto.UpcomingReleases;
+        }
+    }
+}

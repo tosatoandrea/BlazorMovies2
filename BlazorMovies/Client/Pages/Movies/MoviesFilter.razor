@@ -1,0 +1,148 @@
+﻿@page "/movies/search"
+@inject IMoviesRepository moviesRepository
+@inject IGenreRepository genreRepository
+@inject NavigationManager nav
+
+<h3>Search Movies</h3>
+
+<EditForm Model="filterMovieDTO">
+    <div class="form-inline">
+        <div class="form-group mb-2">
+            <label for="title" class="sr-only">Title</label>
+            <input type="text" class="form-control" id="title" placeholder="Movie Title"
+                   @bind-value="filterMovieDTO.Title" @bind-value:event="oninput"
+                   @onkeypress="TitleKeypress" />
+        </div>
+        <div class="form-group mx-sm-3 mb-2">
+            <select class="form-control" @bind="filterMovieDTO.GenreId">
+                <option value="0">
+                    ---Select a genre
+                </option>
+                @foreach (Genre genre in genres)
+                {
+                    <option value="@genre.Id">@genre.Name</option>
+                }
+            </select>
+        </div>
+        <div class="form-group mx-sm-3 mb-2">
+            <input type="checkbox" class="form-check-input" id="upcoming" @bind="filterMovieDTO.UpcomingReleases" />
+            <label for="upcoming" class="form-check-label">Upcoming releases</label>
+        </div>
+        <div class="form-group mx-sm-3 mb-2">
+            <input type="checkbox" class="form-check-input" id="inTheater" @bind="filterMovieDTO.InTheaters" />
+            <label for="inTheater" class="form-check-label">In Theater</label>
+        </div>
+        <button type="button" class="btn btn-primary mx-sm-3 mb-2" @onclick="Search">Search</button>
+        <button type="button" class="btn btn-danger mb-2" @onclick="Clear">Clear</button>
+    </div>
+</EditForm>
+<MoviesList Movies="movies"></MoviesList>
+
+<Pagination CurrentPage="filterMovieDTO.Page" TotalAmountOfPages="totalAmountOfPages" SelectedPage="SelectedPage"></Pagination>
+
+@code {
+    List<Movie> movies = new List<Movie>();
+    List<Genre> genres = new List<Genre>();
+    FilterMovieDTO filterMovieDTO = new FilterMovieDTO(); // { Page = 1, RecordsPerPage = 1 };
+    int totalAmountOfPages;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var queryString = nav.GetQueryStrings(nav.Uri);
+        if (queryString != null)
+        {
+            FillFilterWithQueryStrings(queryString);
+        }
+        await LoadMovies();
+
+        genres = await genreRepository.GetGenres();
+    }
+
+    private void FillFilterWithQueryStrings(Dictionary<string, string> queryStrings)
+    {
+        if (queryStrings.ContainsKey("genreId"))
+        {
+            filterMovieDTO.GenreId = int.Parse(queryStrings["genreId"]);
+        }
+
+        if (queryStrings.ContainsKey("title"))
+        {
+            filterMovieDTO.Title = queryStrings["title"];
+        }
+
+        if (queryStrings.ContainsKey("intheaters"))
+        {
+            filterMovieDTO.UpcomingReleases = bool.Parse(queryStrings["intheaters"]);
+        }
+
+        if (queryStrings.ContainsKey("upcomingReleases"))
+        {
+            filterMovieDTO.UpcomingReleases = bool.Parse(queryStrings["upcomingReleases"]);
+        }
+
+        if (queryStrings.ContainsKey("page"))
+        {
+            filterMovieDTO.Page = int.Parse(queryStrings["page"]);
+        }
+    }
+
+    private async Task SelectedPage(int page)
+    {
+        filterMovieDTO.Page = page;
+        await LoadMovies();
+    }
+
+    private string GenerateQueryString()
+    {
+        var dict = new Dictionary<string, string>();
+        dict["title"] = filterMovieDTO.Title ?? "";
+        dict["genreId"] = filterMovieDTO.GenreId.ToString();
+        dict["upcomingReleases"] = filterMovieDTO.UpcomingReleases.ToString();
+        dict["inTheaters"] = filterMovieDTO.InTheaters.ToString();
+        dict["page"] = filterMovieDTO.Page.ToString();
+
+        var defaultValues = new string[] { "", "false", "0" };
+
+        var querystring = string.Join("&",
+            dict.Where(x => !defaultValues.Contains(x.Value.ToLower()))
+                .Select(x => $"{x.Key}={System.Web.HttpUtility.UrlEncode(x.Value)}").ToArray());
+
+        return querystring;
+    }
+
+    private async Task LoadMovies()
+    {
+        var queryString = GenerateQueryString();
+        if (!string.IsNullOrEmpty(queryString))
+        {
+            queryString = "?" + queryString;
+            nav.NavigateTo("movies/search" + queryString);
+        }
+
+        var paginatedResponse = await moviesRepository.GetMoviesFilter(filterMovieDTO);
+        movies = paginatedResponse.Response;
+        totalAmountOfPages = paginatedResponse.TotalAmountOfPages;
+    }
+
+    private async Task TitleKeypress(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await Search();
+        }
+    }
+
+    private async Task Search()
+    {
+        await LoadMovies();
+    }
+    private async Task Clear()
+    {
+        filterMovieDTO.Title = "";
+        filterMovieDTO.GenreId = 0;
+        filterMovieDTO.UpcomingReleases = false;
+        filterMovieDTO.InTheaters = false;
+
+        await Search();
+    }
+}

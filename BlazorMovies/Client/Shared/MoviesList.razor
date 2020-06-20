@@ -1,0 +1,40 @@
+﻿@inject IJSRuntime js
+@inject IMoviesRepository moviesRepository 
+
+@*importante il paramtro blazor @Key che serve ad indicare a Blazor quando gli oggetti (in questo caso
+movie) sono diversi. Senza questo Blazor si confonde e non riesce a distingure gli oggetti movie*@
+<div class="movies-container">
+    <GenericList List="Movies">
+        <ElementTemplate Context="movie">
+            <IndividualMovie Movie="movie"
+                                DeleteMovie="DeleteMovie" @key="movie.Id" />
+        </ElementTemplate>
+    </GenericList>
+
+</div>
+
+    
+@code {
+    [Parameter] public List<Movie> Movies { get; set; }
+    [Parameter] public RenderFragment NullTemplate { get; set; }
+    [Parameter] public RenderFragment EmptyTemplate { get; set; }
+    bool displayButtons = true;
+    //Movie movieToBeDeleted;
+
+
+
+    private async Task DeleteMovie(Movie m)
+    {
+        //await js.myfunction("custom message");
+        var confirm = await js.Confirm($"are you sure you want to delete {m.Title}?");
+        if (confirm)
+        {
+            await moviesRepository.DeleteMovie(m.Id);
+            Movies.Remove(m);
+        }
+    }
+
+
+
+
+}
